@@ -579,7 +579,7 @@ hr {
     margin-top: 15px;
   }
   .container {
-    width: 344px;
+    width: 296px;
     margin: 0 auto;
   }
   .score-container, .best-container {
@@ -591,8 +591,8 @@ hr {
     margin-bottom: 10px;
   }
   .outer-container {
-    height: 344px;
-    width: 344px;
+    height: 296px;
+    width: 296px;
   }
   .game-container {
     position: absolute;
@@ -610,8 +610,8 @@ hr {
     box-sizing: border-box;
   }
   .game-container:last-child {
-    top: 142px;
-    left: 142px;
+    top: 95px;
+    left: 95px;
   }
   .outer-container .game-message {
     display: none;
