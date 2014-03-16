@@ -4,7 +4,7 @@ function GameManager(size, InputManager, Actuator, ScoreManager) {
   this.scoreManager = new ScoreManager;
   this.actuator = new Actuator;
 
-  this.startTiles = 1;
+  this.startTiles = 2;
 
   this.inputManager.on("move", this.move.bind(this));
   this.inputManager.on("restart", this.restart.bind(this));
@@ -36,7 +36,7 @@ GameManager.prototype.isGameTerminated = function() {
 
 // Set up the game
 GameManager.prototype.setup = function() {
-  this.grid = [new Grid(this.size, 0), new Grid(this.size, 1)];
+  this.grid = [new Grid(this.size), new Grid(this.size)];
 
   this.score = 0;
   this.over = false;
@@ -53,43 +53,58 @@ GameManager.prototype.setup = function() {
 // Set up the initial tiles to start the game with
 GameManager.prototype.addStartTiles = function() {
   for (var j = 0; j < this.grid.length; j++) {
-    this.addCrossTile(j);
     for (var i = 0; i < this.startTiles; i++) {
       this.addRandomTile(j);
     }
   }
+  this.syncCrossTile();
 };
 
 // Adds a tile in a random position
 GameManager.prototype.addRandomTile = function(i) {
   if (this.grid[i].cellsAvailable()) {
     var value = Math.random() < 0.9 ? 2 : 4;
-    var tile = new Tile(this.grid[i].randomAvailableCell(), value);
-
-    this.grid[i].insertTile(tile);
+    var cell = this.grid[i].randomAvailableCell();
+    var tile = new Tile(cell, value);
+    if (!this.tileInCrossOccupied(cell)) {
+      this.grid[i].insertTile(tile);
+    }
   }
 };
 
-// Adds a tile in a cross position
-GameManager.prototype.addCrossTile = function(i) {
-  var position = i == 0 ? {x: this.size - 1, y: this.size - 1} : {x: 0, y: 0};
-  var tile = new Tile(position, 2);
-  this.grid[i].insertTile(tile);
-};
+GameManager.prototype.tileInCrossOccupied = function(cell, i) {
+  return this.isCrossTile(cell, i) && this.grid[1 - i].cellOccupied({
+    x: cell.x + (1 - i * 2) * 2,
+    y: cell.y + (1 - i * 2) * 2
+  });
+}
 
 // Check cross position
-GameManager.prototype.isCrossTile = function(x, y, i) {
-  return (i == 0 && x == this.size - 1 && y == this.size - 1)
-    || (i == 1 && x == 0 && y == 0);
+GameManager.prototype.isCrossTile = function(cell, i) {
+  var x = cell.x;
+  var y = cell.y;
+  return (i == 0 && x <= this.size - 1 && x >= this.size - 2 && y <= this.size - 1 && y >= this.size - 2)
+    || (i == 1 && x >= 0 && x <= 1 && y >= 0 && y <= 1);
 };
 
 // Make the cross tiles' values are the same
 GameManager.prototype.syncCrossTile = function() {
-  var tile1 = this.grid[0].cellContent({x: this.size - 1, y: this.size - 1});
-  var tile2 = this.grid[1].cellContent({x: 0, y: 0});
-  var max = Math.max(tile1.value, tile2.value);
-  tile1.value = max;
-  tile2.value = max;
+  var tile1, tile2, tile;
+  for (var x = this.size - 2; x < this.size; x++) {
+    for (var y = this.size - 2; y < this.size; y++) {
+      tile1 = this.grid[0].cellContent({x: x, y: y});
+      tile2 = this.grid[1].cellContent({x: x - 2, y: y - 2});
+      if (tile1 && tile2) {
+        tile1.value = tile2.value = Math.max(tile1.value, tile2.value);
+      } else if (tile1 && !tile2) {
+        tile = new Tile({x: x - 2, y: y - 2}, tile1.value)
+        this.grid[1].insertTile(tile);
+      } else if (tile2 && !tile1) {
+        tile = new Tile({x: x, y: y}, tile2.value)
+        this.grid[0].insertTile(tile);
+      }
+    }
+  }
 };
 
 // Sends the updated grid to the actuator
@@ -147,9 +162,6 @@ GameManager.prototype.move = function(direction) {
   for (var i = 0; i < this.grid.length; i++) {
     traversals.x.forEach(function(x) {
       traversals.y.forEach(function(y) {
-        if (self.isCrossTile(x, y, i)) {
-          return;
-        }
         cell = {
           x: x,
           y: y
@@ -259,12 +271,15 @@ GameManager.prototype.findFarthestPosition = function(cell, vector, i) {
       x: previous.x + vector.x,
       y: previous.y + vector.y
     };
+    if (this.isCrossTile(previous, i) && !this.isCrossTile(cell, i)) {
+      break;
+    }
   } while (this.grid[i].withinBounds(cell) &&
     this.grid[i].cellAvailable(cell));
 
   return {
     farthest: previous,
-    next: cell // Used to check if a merge is required
+    next: this.isCrossTile(previous, i) && !this.isCrossTile(cell, i) ? {x: this.size, y: this.size} : cell // Used to check if a merge is required
   };
 };
 
