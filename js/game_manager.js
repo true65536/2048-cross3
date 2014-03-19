@@ -1,5 +1,6 @@
 function GameManager(size, InputManager, Actuator, ScoreManager) {
   this.size = size; // Size of the grid
+  this.crossSize = 2;
   this.inputManager = new InputManager;
   this.scoreManager = new ScoreManager;
   this.actuator = new Actuator;
@@ -65,7 +66,7 @@ GameManager.prototype.addRandomTile = function(i) {
     var value = Math.random() < 0.9 ? 2 : 4;
     var cell = this.grid[i].randomAvailableCell();
     var tile = new Tile(cell, value);
-    if (!this.tileInCrossOccupied(cell)) {
+    if (!this.tileInCrossOccupied(cell, i)) {
       this.grid[i].insertTile(tile);
     }
   }
@@ -73,8 +74,8 @@ GameManager.prototype.addRandomTile = function(i) {
 
 GameManager.prototype.tileInCrossOccupied = function(cell, i) {
   return this.isCrossTile(cell, i) && this.grid[1 - i].cellOccupied({
-    x: cell.x + (1 - i * 2) * 2,
-    y: cell.y + (1 - i * 2) * 2
+    x: cell.x + (1 - i * 2) * (4 - this.crossSize),
+    y: cell.y + (1 - i * 2) * (4 - this.crossSize)
   });
 }
 
@@ -82,21 +83,21 @@ GameManager.prototype.tileInCrossOccupied = function(cell, i) {
 GameManager.prototype.isCrossTile = function(cell, i) {
   var x = cell.x;
   var y = cell.y;
-  return (i == 0 && x <= this.size - 1 && x >= this.size - 2 && y <= this.size - 1 && y >= this.size - 2)
-    || (i == 1 && x >= 0 && x <= 1 && y >= 0 && y <= 1);
+  return (i == 0 && x < this.size && x >= this.size - this.crossSize && y < this.size && y >= this.size - this.crossSize)
+    || (i == 1 && x >= 0 && x < this.crossSize && y >= 0 && y < this.crossSize);
 };
 
 // Make the cross tiles' values are the same
 GameManager.prototype.syncCrossTile = function() {
   var tile1, tile2, tile;
-  for (var x = this.size - 2; x < this.size; x++) {
-    for (var y = this.size - 2; y < this.size; y++) {
+  for (var x = this.size - this.crossSize; x < this.size; x++) {
+    for (var y = this.size - this.crossSize; y < this.size; y++) {
       tile1 = this.grid[0].cellContent({x: x, y: y});
-      tile2 = this.grid[1].cellContent({x: x - 2, y: y - 2});
+      tile2 = this.grid[1].cellContent({x: x - (4 - this.crossSize), y: y - (4 - this.crossSize)});
       if (tile1 && tile2) {
         tile1.value = tile2.value = Math.max(tile1.value, tile2.value);
       } else if (tile1 && !tile2) {
-        tile = new Tile({x: x - 2, y: y - 2}, tile1.value)
+        tile = new Tile({x: x - (4 - this.crossSize), y: y - (4 - this.crossSize)}, tile1.value)
         this.grid[1].insertTile(tile);
       } else if (tile2 && !tile1) {
         tile = new Tile({x: x, y: y}, tile2.value)
