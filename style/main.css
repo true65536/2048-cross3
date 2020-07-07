@@ -1,4 +1,4 @@
-@import url(http://lab.qiyuuu.com/2048/style/fonts/clear-sans.css);
+ @import url(fonts/clear-sans.css);
  html, body {
   margin: 0;
   padding: 0;
@@ -124,7 +124,7 @@ hr {
   margin-bottom: 30px;
 }
 .container {
-  width: 743px;
+  width: 476px;
   margin: 0 auto;
 }
 @-webkit-keyframes fade-in {
@@ -152,8 +152,8 @@ hr {
   }
 }
 .outer-container {
-  height: 743px;
-  width: 743px;
+  height: 623px;
+  width: 476px;
   position: relative;
   margin-top: 40px;
 }
@@ -173,8 +173,8 @@ hr {
   box-sizing: border-box;
 }
 .game-container:last-child {
-  left: 242px;
-  top: 242px;
+  left: 121px;
+  top: 121px;
 }
 .outer-container .game-message {
   display: none;
@@ -591,8 +591,8 @@ hr {
     margin-bottom: 10px;
   }
   .outer-container {
-    height: 296px;
-    width: 296px;
+    height: 248px;
+    width: 248px;
   }
   .game-container {
     position: absolute;
@@ -610,8 +610,8 @@ hr {
     box-sizing: border-box;
   }
   .game-container:last-child {
-    top: 95px;
-    left: 95px;
+    top: 48px;
+    left: 48px;
   }
   .outer-container .game-message {
     display: none;
